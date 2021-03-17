@@ -52,6 +52,7 @@ main ENDP
 
 compute PROC
 ; https://stackoverflow.com/questions/16622296/looping-and-processing-string-byte-by-byte-in-masm-assembly maybe useful
+; https://stackoverflow.com/questions/23015804/assembly-pass-byte-array-with-a-procedure answer may also be useful
 ; get the value of the address of the top item on the stack (DEST) and get it's value is 0 call decoy, if -1 call encrypt if -2 call decrypt. We will replace in place the plain text / cipher text
 alphabet	BYTE "abcdefghijklmnopqrstuvwxyz"
 ; pushes the pointer to the alphabet array on the stack?
