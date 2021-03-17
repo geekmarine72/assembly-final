@@ -1,6 +1,10 @@
 # Prerequisites
 *.d
 
+# Dumb stuff
+Debug/**
+.vs/**
+
 # Compiled Object files
 *.slo
 *.lo
