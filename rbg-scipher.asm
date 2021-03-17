@@ -51,8 +51,12 @@ main PROC
 main ENDP
 
 compute PROC
+
 ; https://stackoverflow.com/questions/16622296/looping-and-processing-string-byte-by-byte-in-masm-assembly maybe useful
 ; https://stackoverflow.com/questions/23015804/assembly-pass-byte-array-with-a-procedure answer may also be useful
+; https://www.daniweb.com/programming/software-development/threads/453727/changing-spaces-to-underscore see the lodsb which is used to loop through a byte array 
+; https://c9x.me/x86/html/file_module_x86_id_160.html is details about lodsb
+
 ; get the value of the address of the top item on the stack (DEST) and get it's value is 0 call decoy, if -1 call encrypt if -2 call decrypt. We will replace in place the plain text / cipher text
 alphabet	BYTE "abcdefghijklmnopqrstuvwxyz"
 ; pushes the pointer to the alphabet array on the stack?
