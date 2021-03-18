@@ -9,11 +9,18 @@ INCLUDE Irvine32.inc
 .data
 
 .code
+
 main PROC	
 
 	exit
 main ENDP
 
+; COMPUTE PROCEDURE
+; This procedure takes the destination value and decides which of the three modes to go into, decoy, encrypt or decrypt
+; recieves: dest in top of the stack
+; returns: nothing
+; preconditions: dest = 0, -1, or -2, (dest is top of the stack)
+; registers changed: ebp, edx, eax
 compute PROC
 	mov		ebp, esp ; reset base pointer
 	mov		edx, [ebp+4] ; store offset of dest
@@ -41,6 +48,13 @@ compute PROC
 	ret
 compute ENDP
 
+
+; DECOY PROCEDURE
+; This procedure takes operand 1 and operand 2 from 2nd and 3rd from top of the stack, adds them and stores the result in refenced dest (top of stack)
+; recieves: operand 1, operand 2, OFFSET dest. on the stack(from bottom to top of stack)
+; returns: operand 1 + operand 2 in dest
+; preconditions: operand 1 + operand 2 <= 65,536
+; registers changed: ebp, eax (& ax), ebx (& bx), edx
 decoy PROC
 	mov		ebp, esp
 	xor		eax, eax
@@ -55,6 +69,12 @@ decoy PROC
 	ret
 decoy ENDP
 
+; ENCRYPT PROCEDURE
+; This procedure takes the plain text byte string to be encrypted and the cypher key and encrypts the plain text and stores it in its original location
+; recieves: plain text (2nd from top of stack), cypher key (3rd from top of stack)
+; returns: encrypted plain text in its original locations
+; preconditions: enryption key is 26 characters, plain text is 0 terminated
+; registers changed: ebp, esi, ebx, eax (& al)
 encrypt PROC
 	mov		ebp, esp
 	mov		esi, [ebp+12] ; plain text to be encrypted, start of plain text array is now stored in esi
@@ -86,6 +106,12 @@ encrypt PROC
 	ret
 encrypt ENDP
 
+; DECRYPT PROCEDURE
+; This procedure takes the encrypted byte string, and the cypher key, and decrypts the encrypted text, replacing it with the decrypted text
+; recieves: encrypted text (2nd from top of stack), cypher key (3rd from top of stack)
+; returns: decrypted plain text in its original locations
+; preconditions: decryption key is 26 characters, encrypted text is 0 terminated
+; registers changed: ebp, esi, ebx, eax (& al, ah), ecx
 decrypt PROC
 	mov		ebp, esp
 	mov		esi, [ebp+12] ; encrypted text to be converted
@@ -100,23 +126,23 @@ decrypt PROC
 	loopArray:
 		xor		eax, eax
 		mov		al, [esi] ; gets first character of byte string (+1 for each next char)
-		cmp		byte ptr [esi], 0
+		cmp		byte ptr [esi], 0 ; if we reach the 0 terminator, stop
 		jz		endOfLoop
 
-		cmp		al, 97
-		jl		nonLetter
-		cmp		al, 122
-		jg		nonLetter
+		cmp		al, 97 ; if ASCII is lower than lowercase a
+		jl		nonLetter ; then its not a letter
+		cmp		al, 122 ; if ASCII is higher than lowercase z
+		jg		nonLetter ; then its not a letter
 
 
 		letter:
-			mov		ecx, 26
+			mov		ecx, 26 ; used to loop over cypher key
 
 			cypherLoop:
 				mov		ah, [ebx + 1 * ecx - 1] ; get letter from cypher key according to ecx (decrementing counter from 26 to 0)
-				cmp		ah, al
+				cmp		ah, al ; compare the current letter (al) in the encrypted text, with each letter in key (ah)
 				je		match
-				jmp		ignore					
+				jmp		ignore
 				ignore:
 					loop	cypherLoop
 			
