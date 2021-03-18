@@ -1,118 +1,178 @@
-TITLE FILL THIS IN
+TITLE Final Project, substitution cipher
 
-; This program adds and subtracts 32-bit integers
-; and stores the sum in a variable.
+; Author: Jacob Vilevac
+; Course/project ID Date: CS 271:1  3/17/2021
+; Description: A program to encrypt and decrypt a secret message with the message and key passed on the stack
 
 INCLUDE Irvine32.inc
 
 .data
 ; decoy test
-operand1	word  46
-operand2	word -20
-decoyDest	dword 0
+operand1		word	40
+operand2		word	-26
+decoyDest		dword	0
 
 ; encrypt test
-encryptKey	BYTE "filthisin"
-plainText		BYTE "file this in",0
-encryptDest	DWORD -1
+encryptKey		BYTE "efbcdghijklmnopqrstuvwxyza"
+plainText		BYTE "the contents of this message will be a mystery.",0
+encryptDest		DWORD -1
 
 ; decrypt test
-decryptKey	BYTE "filthisin"
-cipherText		BYTE "file this in",0
-decryptDest	DWORD -1
+				     ;abcdefghijklmnopqrstuvwxyz
+decryptKey		BYTE "efbcdghijklmnopqrstuvwxyza"
+cipherText		BYTE "uid bpoudout pg uijt ndttehd xjmm fd e nztudsz.",0
+decryptDest		DWORD -2
 
 .code
 main PROC	
 	; Test decoy compute
-	push operand1
-	push operand2
-	push OFFSET decoyDest
+	push	operand1
+	push	operand2
+	push	OFFSET decoyDest
+
 	call	compute
-	mov eax, decoyDest
-	call WriteInt
+	mov		eax, decoyDest
+	call	WriteInt
+	call	Crlf
 
 	; Test encrypt compute
 	push	OFFSET encryptKey
-	push OFFSET plainText
+	push	OFFSET plainText
 	push	OFFSET encryptDest
-	call compute
-	mov edx, OFFSET plainText
-	call WriteString
+	call	compute
+	mov		edx, OFFSET plainText
+	call	WriteString
+	call	Crlf
 	
 	; Test decrypt compute
 	push	OFFSET decryptKey
-	push OFFSET cipherText
+	push	OFFSET cipherText
 	push	OFFSET decryptDest
-	call compute
-	mov edx, OFFSET cipherText
-	call WriteString
+	call	compute
+	mov		edx, OFFSET cipherText
+	call	WriteString
+	call	Crlf
 
 	exit
 main ENDP
 
 compute PROC
-; https://stackoverflow.com/questions/16622296/looping-and-processing-string-byte-by-byte-in-masm-assembly maybe useful
-; https://stackoverflow.com/questions/23015804/assembly-pass-byte-array-with-a-procedure answer may also be useful
-; https://www.daniweb.com/programming/software-development/threads/453727/changing-spaces-to-underscore see the lodsb which is used to loop through a byte array 
-; https://stackoverflow.com/questions/58791457/how-do-i-check-whether-characters-are-within-certain-ascii-value-ranges answer useful to see if is caps or lower case or other char
-; https://c9x.me/x86/html/file_module_x86_id_160.html is details about lodsb
+	mov		ebp, esp ; reset base pointer
+	mov		edx, [ebp+4] ; store offset of dest
+	mov		eax, [edx] ; get value stored in dest
+	cmp		eax, 0
+	je		modeDecoy
+	cmp		eax, -1
+	je		modeEncrypt
+	cmp		eax, -2
+	je		modeDecrypt
 
-; get the value of the address of the top item on the stack (DEST) and get it's value is 0 call decoy, if -1 call encrypt if -2 call decrypt. We will replace in place the plain text / cipher text
-alphabet	BYTE "abcdefghijklmnopqrstuvwxyz"
-; pushes the pointer to the alphabet array on the stack?
-push OFFSET alphabet
+	modeDecoy:
+		call	decoy
+		jmp		computeEnd
 
+	modeEncrypt:
+		call	encrypt
+		jmp		computeEnd
+
+	modeDecrypt:
+		call	decrypt
+		jmp		computeEnd
+
+	computeEnd:
+	ret
 compute ENDP
 
 decoy PROC
+	mov		ebp, esp
+	xor		eax, eax
+	xor		ebx, ebx
+	mov		edx, [ebp+8] ; dest (procedure adds 8 to stack)
+	mov		ax, [ebp+12] ; operand 2 (dest added 4 to stack)
+	mov		bx, [ebp+14] ; operand 1 (operand 2 added 2 to stack)
 
-; Adds the values and returns the sum 
+	add		ax, bx
+	mov		[edx], ax
 
+	ret
 decoy ENDP
 
 encrypt PROC
-; pops the array pointer for the plaintext from stack ?
+	mov		ebp, esp
+	mov		esi, [ebp+12] ; plain text to be encrypted, start of plain text array is now stored in esi
+	mov		ebx, [ebp+16] ; encryption key start now stored in ebx
 
-; loops through the plaintext position by position 
-;	at each position, push pointer location onto stack?
-;	calls getCipherChar?
-;	repeats for the length of the plaintext
-; returns the ciphertxt
+	loopArray:
+		xor		eax, eax
+		mov		al, [esi] ; gets first character of byte string (+1 for each next char)
+		cmp		byte ptr [esi], 0
+		jz		endOfLoop
+
+		cmp al, 97
+		jl nonLetter
+		cmp al, 122
+		jg nonLetter
+
+		letter:
+			sub		al, 97d ; get base 0 of alphabet
+			mov		eax, [ebx + 1 * eax] ; get corresponding cypher letter
+			mov		[esi], al
+		
+		nonLetter:
+			inc		esi
+			jmp		loopArray
+
+		; ECX now holds the length of our input string
+
+	endOfLoop:
+	ret
 encrypt ENDP
 
 decrypt PROC
-; pops the array pointer for the ciphertext from stack 
-; pushes the pointer to the alphabet array on the stack
-; 
-; loops through the ciphertext position by position 
-;	at each position,push pointer location onto stack?
-;	calls getPlainChar?
-;	repeats for the length of the ciphertext
-; returns the plaintext
+	mov		ebp, esp
+	mov		esi, [ebp+12] ; encrypted text to be converted
+	mov		ebx, [ebp+16] ; encryption key start now stored in ebx
+
+	; FOR ASCII
+	; a = 97
+	; z = 122
+
+	mov ecx, 26
+
+	loopArray:
+		xor		eax, eax
+		mov		al, [esi] ; gets first character of byte string (+1 for each next char)
+		cmp		byte ptr [esi], 0
+		jz		endOfLoop
+
+		cmp		al, 97
+		jl		nonLetter
+		cmp		al, 122
+		jg		nonLetter
+
+
+		letter:
+			mov		ecx, 26
+
+			cypherLoop:
+				mov		ah, [ebx + 1 * ecx - 1] ; get letter from cypher key according to ecx (decrementing counter from 26 to 0)
+				cmp		ah, al
+				je		match
+				jmp		ignore					
+				ignore:
+					loop	cypherLoop
+			
+			match:
+			; ecx now holds the position where we found that letter
+			; ecx also represents the offset from a, that the letter in they key relates to
+			mov		eax, ecx
+			add		eax, 96d
+			mov		[esi], al
+		
+		nonLetter:
+			inc		esi
+			jmp loopArray
+	endOfLoop:
+	ret
 decrypt ENDP 
-
-getCipherChar PROC
-; called by encrypt procedure
-; pop char off stack 
-; pop alphabet off stack
-; pop key off stack
-; get offset from alphabet array of char 
-; get char from key (key offset + char offset)
-; return cipherchar
-getCipherChar ENDP
-
-getPlainChar PROC
-; called by decrypt procedure
-; pop char off stack 
-; pop alphabet off stack
-; pop key off stack
-; get offset from key array of char 
-; get char from alphabet array (alphabet array offset + char offset)
-; return plaintextchar
-getPlainChar ENDP
-
-
-
-
-
 END main
