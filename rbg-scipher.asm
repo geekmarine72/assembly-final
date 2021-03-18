@@ -7,51 +7,9 @@ TITLE Final Project, substitution cipher
 INCLUDE Irvine32.inc
 
 .data
-; decoy test
-operand1		word	40
-operand2		word	-26
-decoyDest		dword	0
-
-; encrypt test
-encryptKey		BYTE "efbcdghijklmnopqrstuvwxyza"
-plainText		BYTE "the contents of this message will be a mystery.",0
-encryptDest		DWORD -1
-
-; decrypt test
-				     ;abcdefghijklmnopqrstuvwxyz
-decryptKey		BYTE "efbcdghijklmnopqrstuvwxyza"
-cipherText		BYTE "uid bpoudout pg uijt ndttehd xjmm fd e nztudsz.",0
-decryptDest		DWORD -2
 
 .code
 main PROC	
-	; Test decoy compute
-	push	operand1
-	push	operand2
-	push	OFFSET decoyDest
-
-	call	compute
-	mov		eax, decoyDest
-	call	WriteInt
-	call	Crlf
-
-	; Test encrypt compute
-	push	OFFSET encryptKey
-	push	OFFSET plainText
-	push	OFFSET encryptDest
-	call	compute
-	mov		edx, OFFSET plainText
-	call	WriteString
-	call	Crlf
-	
-	; Test decrypt compute
-	push	OFFSET decryptKey
-	push	OFFSET cipherText
-	push	OFFSET decryptDest
-	call	compute
-	mov		edx, OFFSET cipherText
-	call	WriteString
-	call	Crlf
 
 	exit
 main ENDP
